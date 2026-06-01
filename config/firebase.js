@@ -1,4 +1,4 @@
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getAnalytics, isSupported } from "firebase/analytics";
 
@@ -12,15 +12,17 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// Guard against initialization without valid config (e.g., during SSR/prerendering at build time)
+const app = firebaseConfig.apiKey
+  ? getApps().length > 0 ? getApp() : initializeApp(firebaseConfig)
+  : null;
 
 // Initialize Auth
-export const auth = getAuth(app);
+export const auth = app ? getAuth(app) : null;
 
 // Initialize Analytics (conditionally for SSR compatibility)
 let analytics;
-if (typeof window !== "undefined") {
+if (typeof window !== "undefined" && app) {
   isSupported().then((supported) => {
     if (supported) {
       analytics = getAnalytics(app);
